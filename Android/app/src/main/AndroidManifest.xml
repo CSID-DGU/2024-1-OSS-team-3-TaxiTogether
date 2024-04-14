@@ -42,6 +42,14 @@
         <activity android:name=".screen6_1">
 
         </activity>
+
+        <activity android:name=".screen6_2">
+
+        </activity>
+
+        <activity android:name=".screen7">
+
+        </activity>
     </application>
 
 </manifest>

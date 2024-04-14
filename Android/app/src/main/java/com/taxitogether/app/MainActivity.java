@@ -1,6 +1,8 @@
 package com.taxitogether.app;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.ViewGroup;
 
 import androidx.activity.EdgeToEdge;
@@ -29,6 +31,18 @@ public class MainActivity extends AppCompatActivity {
 
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapView);
+
+
+        Handler handler = new Handler(); // 뒷부분 테스트를 위함
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent = new Intent(getApplicationContext(), screen6_2.class); //화면 전환
+                startActivity(intent);
+                finish();
+            }
+        }, 1000); //딜레이 타임 조절
+
         //getHashKey();
     }
 

@@ -50,6 +50,10 @@
         <activity android:name=".screen7">
 
         </activity>
+
+        <activity android:name=".screen8">
+
+        </activity>
     </application>
 
 </manifest>

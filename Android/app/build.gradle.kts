@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    // noinspection GradleCompatible
     namespace = "com.taxitogether.app"
     compileSdk = 34
 

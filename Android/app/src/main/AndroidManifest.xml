@@ -30,6 +30,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".screen1">
+
+        </activity>
+
+        <activity android:name=".screen4">
+
+        </activity>
+
+        <activity android:name=".screen6_1">
+
+        </activity>
     </application>
 
 </manifest>

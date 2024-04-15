@@ -22,6 +22,7 @@ import android.util.Log;
 import android.view.ViewGroup;
 import android.content.Intent;
 import android.view.View;
+import android.widget.RelativeLayout;
 
 import net.daum.mf.map.api.CameraUpdateFactory;
 import net.daum.mf.map.api.MapPoint;
@@ -36,6 +37,12 @@ public class screen6_2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen6_2);
+
+
+        MapView mapView2 = new MapView(this);
+        RelativeLayout map2ViewContainer = findViewById(R.id.map_view);
+        map2ViewContainer.addView(mapView2);
+
 
         /*
         // 권한ID를 가져옵니다
@@ -61,13 +68,15 @@ public class screen6_2 extends AppCompatActivity {
         }
 
 
-        MapView mapView = new MapView(this);
-        ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view6_2);
-        mapViewContainer.addView(mapView);
-        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-
          */
+
+        //mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
+
+
+
+
     }
+    /*
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grandResults) {
         // READ_PHONE_STATE의 권한 체크 결과를 불러온다
@@ -89,6 +98,8 @@ public class screen6_2 extends AppCompatActivity {
             }
         }
     }
+
+     */
 
     public void button1(View v){
         Intent intent = new Intent(getApplicationContext(), screen4.class);

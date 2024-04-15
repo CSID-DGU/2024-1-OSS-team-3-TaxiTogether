@@ -1,12 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:paddingBottom="16dp"
+    android:paddingTop="16dp"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
 
-    <!-- 테스트용 -->
-    <TextView
-        android:id="@+id/textView2"
+    <Button
+        android:id="@+id/button_go_back6_2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/go_back"
+        android:onClick="button1" />
+
+    <Button
+        android:id="@+id/button_go_4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="8번 화면입니다" />
+        android:layout_gravity="right"
+        android:layout_marginTop="-5dp"
+        android:layout_marginHorizontal="16dp"
+        android:background="@drawable/button_style3"
+        android:text="처음으로 가기"
+        android:textColor="#545F71"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:onClick="button2" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#000000"
+        android:layout_marginTop="16dp"/> <!-- 위쪽 선 -->
+
+    <FrameLayout
+        android:id="@+id/screen8_frame1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#40B6F675">
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
+
+    <FrameLayout
+        android:id="@+id/screen8_frame2"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+
+        android:background="#40B6F675">
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
+
+    <FrameLayout
+        android:id="@+id/screen8_frame3"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#40B6F675">
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
+
+    <FrameLayout
+        android:id="@+id/screen8_frame4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#40B6F675">
+
+    </FrameLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
+
 </LinearLayout>

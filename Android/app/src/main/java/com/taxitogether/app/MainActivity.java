@@ -32,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
         ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
         mapViewContainer.addView(mapView);
 
-
-        Handler handler = new Handler(); // 뒷부분 테스트를 위함
+/*
+        Handler handler = new Handler(); // 뒷부분 테스트 위함
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -41,12 +41,12 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
-        }, 1000); //딜레이 타임 조절
-
+        }, 500); //딜레이 타임 조절
+ */
         //getHashKey();
     }
 
-    /*
+/*
     private void getHashKey(){
         PackageInfo packageInfo = null;
         try {
@@ -66,8 +66,14 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("KeyHash", "Unable to get MessageDigest. signature=" + signature, e);
             }
         }
+
     }
-    */
+
+
+ */
+
+
+
 
 
 }

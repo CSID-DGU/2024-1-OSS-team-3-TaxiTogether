@@ -8,11 +8,21 @@ import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
 public class screen7 extends AppCompatActivity {
+    private Handler handler = new Handler();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen7);
-        Handler handler = new Handler();
+        startHandler();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopHandler();
+    }
+
+    private void startHandler() {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -21,5 +31,15 @@ public class screen7 extends AppCompatActivity {
                 finish();
             }
         }, 3000); //딜레이 타임 조절
+    }
+
+    private void stopHandler() {
+        handler.removeCallbacksAndMessages(null);
+    }
+
+    public void button1(View v){
+        Intent intent = new Intent(getApplicationContext(), screen6_2.class);
+        startActivity((intent));
+        finish();
     }
 }

@@ -33,16 +33,14 @@ import net.daum.mf.map.api.MapView;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 public class screen6_2 extends AppCompatActivity {
+    private MapView mapView;
+    private RelativeLayout mapViewContainer;
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen6_2);
 
-
-        MapView mapView2 = new MapView(this);
-        RelativeLayout map2ViewContainer = findViewById(R.id.map_view);
-        map2ViewContainer.addView(mapView2);
-
+        initMapView();
 
         /*
         // 권한ID를 가져옵니다
@@ -66,16 +64,39 @@ public class screen6_2 extends AppCompatActivity {
             }
             return;
         }
-
-
          */
-
-        //mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
-
-
-
-
     }
+
+    //지도 생성
+    private void initMapView(){
+        mapView = new MapView(this);
+        mapViewContainer = findViewById(R.id.map_view);
+        mapViewContainer.addView(mapView);
+    }
+
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        // 액티비티 재시작 시
+        // MapView가 포함되어 있지 않다면 추가
+        if (mapViewContainer != null && mapView != null && mapViewContainer.indexOfChild(mapView) == -1) {
+            try {
+                // 다시 맵뷰 초기화 및 추가
+                initMapView();
+            } catch (RuntimeException re) {
+                Log.e("MainActivity", "Error while restarting activity: " + re.getMessage());
+            }
+        }
+    }
+
+    //카카오맵 리소스 제거(다른 액티비티에서 사용하려면 지워야 함)
+    @Override
+    public void finish(){
+        ((ViewGroup) findViewById(R.id.map_view)).removeView(mapView);
+        super.finish();
+    }
+
     /*
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grandResults) {

@@ -18,21 +18,56 @@ import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.RelativeLayout;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class MainActivity extends AppCompatActivity {
+    private MapView mapView;
+    private RelativeLayout mapViewContainer;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        MapView mapView = new MapView(this);
 
-        ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.map_view);
+        initMapView(); // 지도 생성
+
+        handler(); // 뒷 부분 테스트 용
+
+        //getHashKey();
+    }
+
+    private void initMapView(){
+        mapView = new MapView(this);
+        mapViewContainer = findViewById(R.id.map_view);
         mapViewContainer.addView(mapView);
+    }
+    //재시작 시 다시 지도 초기화를 위함
+    @Override
+    protected void onRestart() {
+        super.onRestart();
 
-/*
+        // 액티비티 재시작 시
+        // MapView가 포함되어 있지 않다면 추가
+        if (mapViewContainer != null && mapView != null && mapViewContainer.indexOfChild(mapView) == -1) {
+            try {
+                // 다시 맵뷰 초기화 및 추가
+                initMapView();
+            } catch (RuntimeException re) {
+                Log.e("MainActivity", "Error while restarting activity: " + re.getMessage());
+            }
+        }
+    }
+
+    //카카오맵 리소스 제거(다른 액티비티에서 사용하려면 지워야 함)
+    @Override
+    public void finish(){
+        ((ViewGroup) findViewById(R.id.map_view)).removeView(mapView);
+        super.finish();
+    }
+
+    private void handler(){
         Handler handler = new Handler(); // 뒷부분 테스트 위함
         handler.postDelayed(new Runnable() {
             @Override
@@ -41,9 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(intent);
                 finish();
             }
-        }, 500); //딜레이 타임 조절
- */
-        //getHashKey();
+        }, 3000); //딜레이 타임 조절
     }
 
 /*

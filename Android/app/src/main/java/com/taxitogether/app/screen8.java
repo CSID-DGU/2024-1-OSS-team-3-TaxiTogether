@@ -59,7 +59,7 @@ public class screen8 extends AppCompatActivity {
         finish();
     }
     public void button2(View v){
-        Intent intent = new Intent(getApplicationContext(), screen1.class);
+        Intent intent = new Intent(getApplicationContext(), screen2.class);
         startActivity((intent));
         finish();
     }

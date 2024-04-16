@@ -26,7 +26,7 @@ public class screen6_1 extends AppCompatActivity {
     }
 
     public void button3(View v){
-        Intent intent = new Intent(getApplicationContext(), screen1.class);
+        Intent intent = new Intent(getApplicationContext(), screen2.class);
         startActivity((intent));
         finish();
     }

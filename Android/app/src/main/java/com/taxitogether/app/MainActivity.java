@@ -31,13 +31,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        initMapView(); // 지도 생성
+        //initMapView(); // 지도 생성
 
-        handler(); // 뒷 부분 테스트 용
+        //handler(); // 뒷 부분 테스트 용
+        Intent intent = new Intent(getApplicationContext(), screen2.class); //2번 스크린으로 화면 전환
+        startActivity(intent);
+        finish();
 
         //getHashKey();
     }
-
+    /*
     private void initMapView(){
         mapView = new MapView(this);
         mapViewContainer = findViewById(R.id.map_view);
@@ -69,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void handler(){
         Handler handler = new Handler(); // 뒷부분 테스트 위함
+        /*
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -77,8 +81,13 @@ public class MainActivity extends AppCompatActivity {
                 finish();
             }
         }, 3000); //딜레이 타임 조절
-    }
 
+
+        Intent intent = new Intent(getApplicationContext(), screen2.class); //화면 전환
+        startActivity(intent);
+        finish();
+    }
+*/
 /*
     private void getHashKey(){
         PackageInfo packageInfo = null;

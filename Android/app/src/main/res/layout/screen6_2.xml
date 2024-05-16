@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/button_go_back6_2"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/go_back"
+        android:onClick="button1" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="길을 찾았어요!\n이대로 갈까요?"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <RelativeLayout
+        android:orientation="vertical" android:layout_width="300dp"
+        android:layout_height="360dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp">
+        <RelativeLayout
+            android:id="@+id/map_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </RelativeLayout>
+
+    <FrameLayout
+        android:layout_width="fill_parent"
+        android:layout_height="50dp"
+        android:layout_marginVertical="20dp">
+
+        <Button
+            android:id="@+id/button_go_7"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:background="@drawable/button_style2"
+            android:onClick="button2"
+            android:text="좋아요"
+            android:textColor="#545F71"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:paddingLeft="100dp"
+            app:srcCompat="@drawable/check" />
+    </FrameLayout>
+
+    <Button
+        android:id="@+id/button_go_4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="20dp"
+        android:background="@drawable/button_style2"
+        android:text="아니요 수정할래요"
+        android:textColor="#545F71"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:onClick="button3" />
+
+
+
+</LinearLayout>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="몇 명이서 택시를 타나요?"
+        android:layout_marginVertical="20dp"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="30sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/button_go_4_2ppl"
+        android:layout_width="match_parent"
+        android:layout_height="121dp"
+        android:background="@drawable/button_style2"
+        android:onClick="button1"
+        android:text="둘이서 탈래요"
+        android:layout_marginTop="100dp"
+        android:layout_marginBottom="20dp"
+        android:textColor="#545F71"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="166dp" />
+
+    <Button
+        android:id="@+id/button_go_4_3ppl"
+        android:layout_width="match_parent"
+        android:layout_height="121dp"
+        android:layout_marginVertical="20dp"
+        android:background="@drawable/button_style2"
+        android:onClick="button2"
+        android:text="셋이서 탈래요"
+        android:textColor="#545F71"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="329dp" />
+
+    <Button
+        android:id="@+id/button_go_4_4ppl"
+        android:layout_width="match_parent"
+        android:layout_height="121dp"
+        android:background="@drawable/button_style2"
+        android:layout_marginVertical="20dp"
+        android:onClick="button3"
+        android:text="넷이서 탈래요"
+        android:textColor="#545F71"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        tools:layout_editor_absoluteX="16dp"
+        tools:layout_editor_absoluteY="491dp" />
+
+</LinearLayout>

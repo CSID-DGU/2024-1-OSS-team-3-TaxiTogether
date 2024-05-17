@@ -8,7 +8,22 @@ app = FastAPI()
 
 # 카카오 맵 API를 사용하여 두 지점 간의 거리를 계산하는 함수
 def get_distance_from_kakao_map(start: Tuple[float, float], end: Tuple[float, float]) -> float:
-    return 0.0
+    url = "https://apis-navi.kakaomobility.com/v1/directions"
+    headers = {
+        "Authorization": "KakaoAK af3a07081f830adca6b60768135b5e54",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "origin": f"{start[0]},{start[1]}", # 출발지
+        "destination": f"{end[0]},{end[1]}", # 도착지
+        "priority": "RECOMMEND" # 추천 경로 탐색, TIME 또는 DISTANCE로 설정 가능
+    }
+    response = requests.get(url, headers=headers, json=data)
+    try:
+        distance = response.json()["routes"][0]["distance"]
+        return distance
+    except:
+        raise HTTPException(status_code=400, detail="카카오맵 API 오류")
 
 # 두 지점 간의 거리를 계산하는 함수
 def calculate_distance(start: Tuple[float, float], end: Tuple[float, float]) -> float:

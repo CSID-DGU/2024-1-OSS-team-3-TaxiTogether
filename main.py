@@ -6,28 +6,48 @@ import math
 
 app = FastAPI()
 
+temp_distance = []  # 거리 계산 데이터를 저장하는 리스트
+
 # 카카오 맵 API를 사용하여 두 지점 간의 거리를 계산하는 함수
 def get_distance_from_kakao_map(start: Tuple[float, float], end: Tuple[float, float]) -> float:
+    for data in temp_distance:
+        if (start, end) == (data[0], data[1]) or (end, start) == (data[0], data[1]):
+            return data[2]
     url = "https://apis-navi.kakaomobility.com/v1/directions"
     headers = {
         "Authorization": "KakaoAK af3a07081f830adca6b60768135b5e54",
         "Content-Type": "application/json"
     }
-    data = {
-        "origin": f"{start[0]},{start[1]}", # 출발지
-        "destination": f"{end[0]},{end[1]}", # 도착지
-        "priority": "RECOMMEND" # 추천 경로 탐색, TIME 또는 DISTANCE로 설정 가능
+    params = {
+        "origin": f"{start[1]},{start[0]}",  # 출발지 (위도,경도)
+        "destination": f"{end[1]},{end[0]}",  # 도착지 (위도,경도)
+        "priority": "RECOMMEND"  # 추천 경로 탐색
     }
-    response = requests.get(url, headers=headers, json=data)
+    response = requests.get(url, headers=headers, params=params)
     try:
-        distance = response.json()["routes"][0]["distance"]
+        data = response.json()
+        print(data)
+        distance = data["routes"][0]["summary"]["distance"] / 1000  # 미터 단위를 km로 변환
+        temp_distance.append([start, end, distance])
         return distance
-    except:
-        raise HTTPException(status_code=400, detail="카카오맵 API 오류")
+    except Exception as e:
+        try:
+            if data["routes"][0]['result_code'] != 0:
+                return [400, data["routes"][0]["result_msg"]]
+        except:
+            try:
+                if data["code"] != 0:
+                    return [400, data["msg"]]
+            except:
+                return [500, f"Internal Server Error: {e}"]
 
 # 두 지점 간의 거리를 계산하는 함수
 def calculate_distance(start: Tuple[float, float], end: Tuple[float, float]) -> float:
-    return get_distance_from_kakao_map(start, end)
+    result = get_distance_from_kakao_map(start, end)
+    if type(result) != list:
+        return result
+    else:
+        raise HTTPException(status_code=400, detail=result[1])
 
 # 모든 가능한 경로와 그에 따른 거리를 계산하여 최적의 경로를 찾는 함수
 def find_optimal_route(start: Tuple[float, float], destinations: List[Tuple[float, float]]) -> Tuple[List[Tuple[float, float]], float]:
@@ -43,6 +63,7 @@ def find_optimal_route(start: Tuple[float, float], destinations: List[Tuple[floa
             min_distance = total_distance
             optimal_route = route
 
+    temp_distance.clear()  # 거리 계산 데이터를 초기화합니다.
     return optimal_route, min_distance
 
 # 경로 유효성 검사 및 최적 경로 탐색 함수
@@ -51,11 +72,11 @@ def validate_and_find_optimal_route(start: Tuple[float, float], destinations: Li
     
     # 거리를 바탕으로 요금을 계산합니다.
     M = 4800  # 기본 요금
-    x = 100000 / 131  # 1km당 요금
+    x = 800  # 1km당 요금 (예시로 1000원 설정)
     a = calculate_distance(start, optimal_route[0])
     b = calculate_distance(start, optimal_route[-1])
     k = calculate_distance(optimal_route[0], optimal_route[1])
-    l = calculate_distance(optimal_route[1], optimal_route[2])
+    l = calculate_distance(optimal_route[1], optimal_route[2]) if len(optimal_route) > 2 else 0
     n = calculate_distance(optimal_route[2], optimal_route[3]) if len(optimal_route) > 3 else 0
 
     t1 = a / 4 + k / 3 + l / 2 + n
@@ -73,13 +94,24 @@ def validate_and_find_optimal_route(start: Tuple[float, float], destinations: Li
         return False, [], 0.0
 
 # 요금 분배 알고리즘
-def distribute_fees(total_fee: float, optimal_route: List[Tuple[float, float]], num_people: int) -> List[float]:
+def distribute_fees(start: Tuple[float, float], total_fee: float, optimal_route: List[Tuple[float, float]], num_people: int) -> List[float]:
+    a = calculate_distance(start, optimal_route[0])
+    k = calculate_distance(optimal_route[0], optimal_route[1])
+    l = calculate_distance(optimal_route[1], optimal_route[2]) if num_people > 2 else 0
+    n = calculate_distance(optimal_route[2], optimal_route[3]) if num_people > 3 else 0
+
+    h = total_fee
+    h1 = (a * h) / (a + k + l + n)
+    h2 = (k * h) / (a + k + l + n)
+    h3 = (l * h) / (a + k + l + n) if num_people > 2 else 0
+    h4 = (n * h) / (a + k + l + n) if num_people > 3 else 0
+
     if num_people == 2:
-        return [total_fee / 2, total_fee / 2]
+        return [h1, h2]
     elif num_people == 3:
-        return [total_fee / 3, total_fee / 3, total_fee / 3]
+        return [h1, h2, h3]
     elif num_people == 4:
-        return [total_fee / 4, total_fee / 4, total_fee / 4, total_fee / 4]
+        return [h1, h2, h3, h4]
     else:
         raise ValueError("Invalid number of people")
 
@@ -98,7 +130,7 @@ async def calculate_fare(request: Request):
     if not is_valid:
         return {"success": False}
     
-    fare_distribution = distribute_fees(total_fee, optimal_route, num_people)
+    fare_distribution = distribute_fees(start, total_fee, optimal_route, num_people)
     
     return {
         "success": True,

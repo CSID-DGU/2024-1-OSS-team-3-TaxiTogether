@@ -53,22 +53,22 @@
             app:srcCompat="@drawable/money" />
 
         <TextView
-            android:id="@+id/textView2"
+            android:id="@+id/textView1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="40dp"
-            android:text="30분정도 더 걸리지만...\n10000원이나\n아낄 수 있어요!"
+            android:text="\n\n"
             android:textAlignment="center"
             android:textColor="#000000"
             android:textSize="40sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/textView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
-            android:text="혼자 타면 60분 걸리고 25000원을 내야해요\n30%를 이득 본 셈이에요!"
+            android:text="\n"
             android:gravity="right"
             android:textColor="#000000"
             android:textSize="20sp"

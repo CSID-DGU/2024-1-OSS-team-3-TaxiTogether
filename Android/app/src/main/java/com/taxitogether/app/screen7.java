@@ -2,17 +2,24 @@ package com.taxitogether.app;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.animation.ObjectAnimator;
 import android.os.Bundle;
 import android.content.Intent;
 import android.os.Handler;
 import android.view.View;
 import android.view.ViewGroup;
+import android.app.Activity;
+import android.widget.ProgressBar;
 public class screen7 extends AppCompatActivity {
     private Handler handler = new Handler();
+
+    private ProgressBar progressBar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen7);
+
+        progressBar = findViewById(R.id.progressBar);
         startHandler();
     }
 
@@ -23,6 +30,9 @@ public class screen7 extends AppCompatActivity {
     }
 
     private void startHandler() {
+        ObjectAnimator progressAnimator = ObjectAnimator.ofInt(progressBar, "progress", 0, 100);
+        progressAnimator.setDuration(3000); // 3초
+        progressAnimator.start();
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {

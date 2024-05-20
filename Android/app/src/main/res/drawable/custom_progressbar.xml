@@ -1,0 +1,15 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="ring"
+            android:thickness="5dp"
+            android:useLevel="false">
+            <solid android:color="@color/white" />
+            <size android:width = "220dp" android:height="220dp"/>
+        </shape>
+
+    </item>
+    <item android:drawable="@drawable/calculating_icon"
+        android:gravity="center"
+        android:bottom="20dp"
+        />
+</layer-list>

@@ -24,15 +24,16 @@
         <meta-data android:name="com.kakao.sdk.AppKey" android:value="ec13c5dcd0565f78f23a1490e9bba220"/>
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name=".screen1">
+        <activity android:name=".SplashActivity"
+            android:exported="false">
 
         </activity>
 

@@ -33,12 +33,14 @@ public class MainActivity extends AppCompatActivity {
 
         //initMapView(); // 지도 생성
 
+        //getHashKey();
+
         //handler(); // 뒷 부분 테스트 용
         Intent intent = new Intent(getApplicationContext(), screen2.class); //2번 스크린으로 화면 전환
         startActivity(intent);
         finish();
 
-        //getHashKey();
+
     }
     /*
     private void initMapView(){
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 */
-/*
+
     private void getHashKey(){
         PackageInfo packageInfo = null;
         try {
@@ -112,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
- */
+
 
 
 

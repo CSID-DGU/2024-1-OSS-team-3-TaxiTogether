@@ -37,57 +37,59 @@
         android:background="#000000"
         android:layout_marginTop="16dp"/> <!-- 위쪽 선 -->
 
-    <FrameLayout
-        android:id="@+id/screen8_frame1"
+    <LinearLayout
+        android:id="@+id/screen8_linear1"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#40B6F675">
+        android:orientation="vertical"
+        android:background="#20B6F675">
 
-    </FrameLayout>
+        <ImageView
+            android:id="@+id/money"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            app:srcCompat="@drawable/money" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:text="\n\n"
+            android:textAlignment="center"
+            android:textColor="#000000"
+            android:textSize="40sp"
+            android:textStyle="bold" />
 
-    <FrameLayout
-        android:id="@+id/screen8_frame2"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:text="\n"
+            android:gravity="right"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:textStyle="bold" />
 
-        android:background="#40B6F675">
+        <Button
+            android:id="@+id/button_go_taxi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="30dp"
+            android:layout_marginHorizontal="0dp"
+            android:background="@drawable/button_style2"
+            android:text="택시 예약하러 가기"
+            android:textColor="#545F71"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:onClick="button3" />
+    </LinearLayout>
 
-    </FrameLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
-
-    <FrameLayout
-        android:id="@+id/screen8_frame3"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#40B6F675">
-
-    </FrameLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@android:color/black"/> <!-- 아래쪽 선 -->
-
-    <FrameLayout
-        android:id="@+id/screen8_frame4"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="#40B6F675">
-
-    </FrameLayout>
 
     <View
         android:layout_width="match_parent"

@@ -36,7 +36,8 @@
         android:textSize="16sp"
         android:textStyle="bold"
         tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="166dp" />
+        tools:layout_editor_absoluteY="166dp"
+        />
 
     <Button
         android:id="@+id/button_go_4_3ppl"

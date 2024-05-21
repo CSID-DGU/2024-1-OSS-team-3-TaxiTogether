@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -21,7 +22,10 @@ import android.content.Intent;
 import android.view.View;
 import android.view.ViewGroup;
 
+
+
 public class screen2 extends AppCompatActivity {
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -49,7 +53,11 @@ public class screen2 extends AppCompatActivity {
             }
             return;
         }
+
+
+
     }
+
 
     public void button1(View v){
         Intent intent = new Intent(getApplicationContext(), screen4.class);
@@ -93,7 +101,7 @@ public class screen2 extends AppCompatActivity {
 
             // 권한 체크에 동의를 하지 않으면 안드로이드 종료
             if (check_result == false) {
-
+                finish();
             }
         }
     }

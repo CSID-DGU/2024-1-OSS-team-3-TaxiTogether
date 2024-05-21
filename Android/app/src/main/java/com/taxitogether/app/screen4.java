@@ -53,7 +53,6 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.screen4);
         // Google API 클라이언트 생성
         googleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
@@ -61,6 +60,7 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
         googleApiClient.connect();
 
         checkLocationSettings();
+        setContentView(R.layout.screen4);
         initMapView();
     }
 
@@ -104,6 +104,7 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == RESULT_OK) {
                 // 사용자가 GPS를 켬
+                mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
             } else {
                 // 사용자가 GPS를 켜는 것을 거부함
             }
@@ -148,6 +149,10 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
     public void finish(){
         ((ViewGroup) findViewById(R.id.map_view)).removeView(mapView);
         super.finish();
+    }
+
+    public void find_current_location(View v){
+        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
     }
 
     public void button1(View v){

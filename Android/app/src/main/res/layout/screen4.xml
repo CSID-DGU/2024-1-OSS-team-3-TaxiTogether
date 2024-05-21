@@ -58,10 +58,32 @@
         android:layout_width="match_parent"
         android:layout_gravity="center"
         android:layout_marginTop="50dp"
-        android:layout_marginBottom="50dp">
+        android:layout_marginBottom="50dp"
+        >
+
         <RelativeLayout
             android:id="@+id/map_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/map_view"
+            android:layout_below="@id/map_view"
+            android:layout_marginLeft="-70dp"
+            android:layout_marginTop="-70dp">
+
+            <ImageButton
+                android:id="@+id/find_current_location"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:background="@drawable/circle"
+                android:scaleType="centerInside"
+                android:onClick="find_current_location"
+                android:src="@drawable/currentlocation"/>
+
+        </FrameLayout>
     </RelativeLayout>
+
 </LinearLayout>

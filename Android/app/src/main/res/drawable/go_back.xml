@@ -1,12 +1,24 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="40dp"
-    android:height="40dp"
-    android:viewportWidth="40"
-    android:viewportHeight="40">
-    <path
-        android:strokeColor="#FF545F71"
-        android:strokeWidth="2"
-        android:strokeLineCap="round"
-        android:strokeLineJoin="round"
-        android:pathData="M25 31.67L13.33 20 25 8.33"/>
-</vector>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight">
+    <item android:id="@android:id/mask">
+        <shape android:shape="oval">
+            <solid android:color="@android:color/white" />
+            <size android:height="40dp"
+                android:width="40dp"/>
+        </shape>
+    </item>
+    <item>
+        <vector xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="40dp"
+            android:height="40dp"
+            android:viewportWidth="40"
+            android:viewportHeight="40">
+            <path
+                android:strokeColor="#FF545F71"
+                android:strokeWidth="2"
+                android:strokeLineCap="round"
+                android:strokeLineJoin="round"
+                android:pathData="M25 31.67L13.33 20 25 8.33"/>
+        </vector>
+    </item>
+</ripple>

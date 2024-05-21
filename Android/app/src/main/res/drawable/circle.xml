@@ -14,7 +14,7 @@
             </item>
             <item>
                 <shape android:shape="oval">
-                    <solid android:color="#40B6F675" />
+                    <solid android:color="#80B6F675" />
                 </shape>
             </item>
         </layer-list>

@@ -16,53 +16,36 @@
         android:id="@+id/textView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="몇 명이서 택시를 타나요?"
+        android:text="함께 택시탈 사람을 찾아봐요"
         android:layout_marginVertical="20dp"
         android:textAlignment="center"
         android:textColor="#000000"
         android:textSize="30sp"
         android:textStyle="bold" />
 
-    <Button
-        android:id="@+id/button_go_4_2ppl"
-        android:layout_width="match_parent"
-        android:layout_height="121dp"
-        android:background="@drawable/button_style2"
-        android:onClick="button1"
-        android:text="둘이서 탈래요"
-        android:layout_marginTop="100dp"
-        android:layout_marginBottom="20dp"
-        android:textColor="#545F71"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="166dp"
-        />
+    <RelativeLayout
+        android:orientation="vertical" android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="100dp">
+
+        <ImageView
+            android:id="@+id/gifView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="fitXY"/>
+    </RelativeLayout>
 
     <Button
-        android:id="@+id/button_go_4_3ppl"
+        android:id="@+id/button_go_4"
         android:layout_width="match_parent"
-        android:layout_height="121dp"
-        android:layout_marginVertical="20dp"
-        android:background="@drawable/button_style2"
-        android:onClick="button2"
-        android:text="셋이서 탈래요"
-        android:textColor="#545F71"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        tools:layout_editor_absoluteX="16dp"
-        tools:layout_editor_absoluteY="329dp" />
-
-    <Button
-        android:id="@+id/button_go_4_4ppl"
-        android:layout_width="match_parent"
-        android:layout_height="121dp"
-        android:background="@drawable/button_style2"
-        android:layout_marginVertical="20dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="30dp"
+        android:background="@drawable/button_style"
         android:onClick="button3"
-        android:text="넷이서 탈래요"
+        android:text="시작할래요!"
         android:textColor="#545F71"
-        android:textSize="16sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         tools:layout_editor_absoluteX="16dp"
         tools:layout_editor_absoluteY="491dp" />

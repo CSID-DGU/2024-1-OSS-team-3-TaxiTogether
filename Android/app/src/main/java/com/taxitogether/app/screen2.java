@@ -1,10 +1,14 @@
 package com.taxitogether.app;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.graphics.drawable.Drawable;
+import android.widget.ImageView;
+import com.bumptech.glide.Glide;
 import android.Manifest;
 import android.content.Context;
 import android.content.IntentSender;
@@ -21,16 +25,38 @@ import android.os.Bundle;
 import android.content.Intent;
 import android.view.View;
 import android.view.ViewGroup;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 
 
 
 public class screen2 extends AppCompatActivity {
-
+    private ImageView imageView;
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen2);
 
+        imageView = findViewById(R.id.gifView);
+
+        Glide.with(this)
+                .asGif()
+                .load(R.drawable.example) // 여기에 GIF 리소스 ID를 넣으세요
+                .into(new CustomTarget<GifDrawable>() {
+                    @Override
+                    public void onResourceReady(@NonNull GifDrawable resource, @Nullable Transition<? super GifDrawable> transition) {
+                        resource.setLoopCount(1); // 한 번만 재생
+                        imageView.setImageDrawable(resource);
+                        resource.start();
+                    }
+
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        imageView.setImageDrawable(placeholder);
+                    }
+                });
 
         // 권한ID를 가져옵니다
         int permission = ContextCompat.checkSelfPermission(this,
@@ -59,30 +85,13 @@ public class screen2 extends AppCompatActivity {
     }
 
 
-    public void button1(View v){
-        Intent intent = new Intent(getApplicationContext(), screen4.class);
-        // (전역 변수) 탑승 인원 설정
-        ( (ValueApplication) getApplication() ).set_num(2);
-        startActivity((intent));
-        finish();
-    }
-
-    public void button2(View v){
-        Intent intent = new Intent(getApplicationContext(), screen4.class);
-        // (전역 변수) 탑승 인원 설정
-        ( (ValueApplication) getApplication() ).set_num(3);
-        startActivity((intent));
-        finish();
-    }
-
-    public void button3(View v){
+    public void button(View v){
         Intent intent = new Intent(getApplicationContext(), screen4.class);
         // (전역 변수) 탑승 인원 설정
         ( (ValueApplication) getApplication() ).set_num(4);
         startActivity((intent));
         finish();
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grandResults) {

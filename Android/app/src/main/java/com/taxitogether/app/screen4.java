@@ -1,12 +1,15 @@
 package com.taxitogether.app;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.IntentSender;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -23,6 +26,7 @@ import android.util.Log;
 import android.view.ViewGroup;
 import android.content.Intent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.RelativeLayout;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -37,6 +41,7 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import net.daum.mf.map.api.CameraUpdateFactory;
+import net.daum.mf.map.api.MapPOIItem;
 import net.daum.mf.map.api.MapPoint;
 import net.daum.mf.map.api.MapPointBounds;
 import net.daum.mf.map.api.MapPolyline;
@@ -47,6 +52,11 @@ import java.security.NoSuchAlgorithmException;
 public class screen4 extends AppCompatActivity implements MapView.CurrentLocationEventListener, MapView.MapViewEventListener {
     private MapView mapView;
     private RelativeLayout mapViewContainer;
+    private MapPOIItem marker_start;
+    private MapPOIItem marker_end;
+
+    private boolean start_check=false;
+    private boolean end_check=false;
 
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     private GoogleApiClient googleApiClient;
@@ -59,11 +69,12 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
                 .build();
         googleApiClient.connect();
 
-        checkLocationSettings();
         setContentView(R.layout.screen4);
         initMapView();
+        checkLocationSettings();
     }
 
+    // gps가 켜져있는지 체크하고 현 위치를 추적하거나 하지 않음
     private void checkLocationSettings() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
@@ -76,6 +87,7 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
                     @Override
                     public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
                         // GPS가 이미 켜져 있다면 코드 실행
+                        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
                     }
                 })
                 .addOnFailureListener(this, new OnFailureListener() {
@@ -122,10 +134,10 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
     //지도 생성
     private void initMapView(){
         mapView = new MapView(this);
-        mapView.setMapViewEventListener(this);
-        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOnWithoutHeading);
         mapViewContainer = findViewById(R.id.map_view);
         mapViewContainer.addView(mapView);
+        mapView.setMapViewEventListener(this);
+
     }
 
     @Override
@@ -207,7 +219,126 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
 
     @Override
     public void onMapViewSingleTapped(MapView mapView, MapPoint mapPoint) {
+        // 현재 위치 얻어내야 함
 
+        // 터치한 위치의 위도 경도를 얻어내고
+        MapPoint.GeoCoordinate geoCoordinate = mapPoint.getMapPointGeoCoord();
+
+        if(!start_check) {
+            updateMarker_start(geoCoordinate.latitude, geoCoordinate.longitude);
+        }
+        else{
+            updateMarker_end(geoCoordinate.latitude, geoCoordinate.longitude);
+        }
+    }
+
+    // 출발지 마커를 띄우는 메서드
+    private void updateMarker_start(double latitude, double longitude){
+        if(marker_start!=null){
+            mapView.removePOIItem(marker_start);
+        } // 시작 마커가 존재할 경우 제거 후 재생성
+
+        MapPoint Marker_point = MapPoint.mapPointWithGeoCoord(latitude, longitude);
+        // 마커를 출력한다
+        marker_start = new MapPOIItem();
+        marker_start.setItemName("");
+        marker_start.setShowCalloutBalloonOnTouch(false);
+        marker_start.setTag(0);
+        marker_start.setMapPoint(Marker_point);
+        marker_start.setMarkerType(MapPOIItem.MarkerType.BluePin);
+        marker_start.setSelectedMarkerType(MapPOIItem.MarkerType.BluePin);
+        mapView.addPOIItem(marker_start);
+
+        showCustomDialog_start(latitude, longitude);
+    }
+    
+    // 목적지 마커를 띄우는 메서드
+    private void updateMarker_end(double latitude, double longitude){
+        if(marker_end!=null){
+            mapView.removePOIItem(marker_end);
+        } // 시작 마커가 존재할 경우 제거 후 재생성
+
+        MapPoint Marker_point = MapPoint.mapPointWithGeoCoord(latitude, longitude);
+        // 마커를 출력한다
+        marker_end = new MapPOIItem();
+        marker_end.setItemName("");
+        marker_end.setShowCalloutBalloonOnTouch(false);
+        marker_end.setTag(0);
+        marker_end.setMapPoint(Marker_point);
+        marker_end.setMarkerType(MapPOIItem.MarkerType.RedPin);
+        marker_end.setSelectedMarkerType(MapPOIItem.MarkerType.RedPin);
+        mapView.addPOIItem(marker_end);
+
+        showCustomDialog_end(latitude, longitude);
+    }
+    
+    // 출발지 선택 확인 창을 띄우는 메서드
+    private void showCustomDialog_start(final double latitude, final double longitude){
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_start_coordinate);
+        dialog.setTitle("출발지 설정");
+
+        Button buttonYes = (Button) dialog.findViewById(R.id.button_yes);
+        Button buttonNo = (Button) dialog.findViewById(R.id.button_no);
+
+        buttonYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setStartLocation(latitude, longitude);
+                dialog.dismiss();
+            }
+        });
+
+        buttonNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void showCustomDialog_end(final double latitude, final double longitude){
+        final Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.dialog_end_coordinate);
+        dialog.setTitle("출발지 설정");
+
+        Button buttonYes = (Button) dialog.findViewById(R.id.button_yes);
+        Button buttonNo = (Button) dialog.findViewById(R.id.button_no);
+
+        buttonYes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setEndLocation(latitude, longitude);
+                dialog.dismiss();
+            }
+        });
+
+        buttonNo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private void setStartLocation(double latitude, double longitude){
+        ((ValueApplication) getApplication()).set_start_latitude(latitude);
+        ((ValueApplication) getApplication()).set_start_longitude(longitude);
+        start_check = true;
+    }
+    private void setEndLocation(double latitude, double longitude){
+        ((ValueApplication) getApplication()).set_end_latitude(latitude);
+        ((ValueApplication) getApplication()).set_end_longitude(longitude);
+        end_check = true;
+        if(start_check&&end_check) {
+            Intent intent = new Intent(getApplicationContext(), screen6_2.class);
+            startActivity((intent));
+            finish();
+        }
     }
 
     @Override
@@ -222,7 +353,7 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
 
     @Override
     public void onMapViewDragStarted(MapView mapView, MapPoint mapPoint) {
-
+        mapView.setCurrentLocationTrackingMode(MapView.CurrentLocationTrackingMode.TrackingModeOff);
     }
 
     @Override

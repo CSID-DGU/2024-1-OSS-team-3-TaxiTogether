@@ -42,7 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_marginVertical="30dp"
         android:background="@drawable/button_style"
-        android:onClick="button3"
+        android:onClick="button"
         android:text="시작할래요!"
         android:textColor="#545F71"
         android:textSize="22sp"

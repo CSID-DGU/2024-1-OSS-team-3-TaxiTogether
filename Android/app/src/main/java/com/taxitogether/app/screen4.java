@@ -56,7 +56,6 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
     private MapPOIItem marker_end;
 
     private boolean start_check=false;
-    private boolean end_check=false;
 
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     private GoogleApiClient googleApiClient;
@@ -333,9 +332,8 @@ public class screen4 extends AppCompatActivity implements MapView.CurrentLocatio
     private void setEndLocation(double latitude, double longitude){
         ((ValueApplication) getApplication()).set_end_latitude(latitude);
         ((ValueApplication) getApplication()).set_end_longitude(longitude);
-        end_check = true;
-        if(start_check&&end_check) {
-            Intent intent = new Intent(getApplicationContext(), screen6_2.class);
+        if(start_check) {
+            Intent intent = new Intent(getApplicationContext(), screen5.class);
             startActivity((intent));
             finish();
         }

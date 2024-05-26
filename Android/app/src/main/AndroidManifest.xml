@@ -45,6 +45,10 @@
 
         </activity>
 
+        <activity android:name=".screen5">
+
+        </activity>
+
         <activity android:name=".screen6_1">
 
         </activity>

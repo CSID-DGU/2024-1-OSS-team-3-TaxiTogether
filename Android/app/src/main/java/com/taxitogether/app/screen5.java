@@ -3,9 +3,11 @@ package com.taxitogether.app;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.ObjectAnimator;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -15,15 +17,29 @@ import android.widget.ProgressBar;
 
 import net.daum.mf.map.api.MapPoint;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
 
 
 // 10개의 목적지 집합을 생성하고 이를 백엔드에 제공하는 java 코드
 public class screen5 extends AppCompatActivity {
-    private Handler handler = new Handler();
-    private int num_of_endpoints=10; // 목적지 집합 개수
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private Handler handler2 = new Handler();
     private ProgressBar progressBar;
+    private boolean is_route_valid= false;
+    private boolean isResultReady = false;
+    private String apiResult;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,24 +52,140 @@ public class screen5 extends AppCompatActivity {
         int r = (int)calculateDistance(start, end);
         // 출발점과 목적지의 각도 계산
         double angle = calculateAngleInRadians(start, end);
-        ArrayList<MapPoint> end_points = new ArrayList<>();
-        for(int i=0; i<num_of_endpoints; i++){
-            MapPoint randompoint;
-            if (r<2000) {
-                randompoint = getRandomLocation(end, r * 3, angle);
-            }
-            else{
-                randompoint = getRandomLocation(end, r * 2, angle);
-            }
-            end_points.add(randompoint);
-            Log.d("RandomLocation", "Location " + (i+1) + ": " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
-        }
+        ArrayList<MapPoint> destinations = new ArrayList<>();
+        destinations.add(end); // 사용자의 목적지를 Queue에 삽입
 
         progressBar = findViewById(R.id.progressBar);
         startHandler();
+
+        Runnable task = new Runnable() {
+            public void run(){
+                while(true){ // 끝없이 다른 사용자의 목적지가 Queue에 들어온다고 가정
+                    MapPoint randompoint;
+                    randompoint = getRandomLocation(end, r * 4);
+                    destinations.add(randompoint);
+
+                    new PostTask(start, destinations, destinations.size(), handler).execute();
+
+                    // 결과가 준비될 때까지 대기
+                    synchronized (screen5.this) {
+                        while (!isResultReady) {
+                            try {
+                                screen5.this.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    // 결과 처리
+                    if (apiResult != null) {
+                        // 결과를 로그에 출력
+                        Log.d("API Response", apiResult);
+                        // JSON 응답을 파싱하여 is_route_valid 값을 설정합니다.
+                        try {
+                            JSONObject jsonResponse = new JSONObject(apiResult);
+                            is_route_valid = jsonResponse.getBoolean("is_route_valid");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        // 결과가 준비된 후 플래그를 리셋
+                        isResultReady = false;
+                    }
+
+                    if(is_route_valid && destinations.size()==4){
+                        Intent intent = new Intent(getApplicationContext(), screen6_2.class); //화면 전환
+                        startActivity(intent);
+                        finish();
+                    }
+                    else if(is_route_valid){
+                        is_route_valid=false;
+                    }
+                    else{
+                        destinations.remove(destinations.size()-1); // 만약 유효하지 않을 경우 제거
+                    }
+                    Log.d("RandomLocation", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
+                }
+            }
+        };
+        new Thread(task).start();
     }
 
-    private MapPoint getRandomLocation(MapPoint c, int radius, double angle) {
+    private class PostTask extends AsyncTask<Void, Void, String> {
+        private MapPoint start;
+        private ArrayList<MapPoint> destinations;
+        private int numPeople;
+        private Handler handler;
+
+        public PostTask(MapPoint start, ArrayList<MapPoint> destinations, int numPeople, Handler handler) {
+            this.start = start;
+            this.destinations = destinations;
+            this.numPeople = numPeople;
+            this.handler = handler;
+        }
+        @Override
+        protected String doInBackground(Void... voids) {
+            String urlString = "http://localhost:8000/calculate_fare";
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL(urlString);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestMethod("POST");
+                urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
+                urlConnection.setRequestProperty("Accept", "application/json");
+                urlConnection.setDoOutput(true);
+
+                JSONObject data = new JSONObject(); // 출발지를 json에 담는다
+                data.put("start", new JSONArray(new double[]{start.getMapPointGeoCoord().latitude, start.getMapPointGeoCoord().longitude}));
+
+                JSONArray destinationsArray = new JSONArray(); // 목적지 집합을 json에 담는다
+                for(MapPoint point: destinations){
+                    destinationsArray.put(new JSONArray(new double[]{point.getMapPointGeoCoord().latitude, point.getMapPointGeoCoord().longitude}));
+                }
+                data.put("destinations", destinationsArray);
+                data.put("num_people", numPeople);
+
+                try (Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream(), "UTF-8"))) {
+                    writer.write(data.toString());
+                }
+
+                BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "utf-8"));
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) { // response를 담아서 string으로 반환
+                    response.append(responseLine.trim());
+                }
+
+                return response.toString();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                return null;
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            handler.post(new Runnable() {
+                public void run(){ // 결과를 받아서 apiResult에 담는다
+                    synchronized (screen5.this) {
+                        apiResult = result;
+                        isResultReady = true;
+                        screen5.this.notifyAll();
+                    }
+                }
+            });
+
+        }
+    }
+
+    private MapPoint getRandomLocation(MapPoint c, int radius) {
         double d2r = Math.PI / 180;
         double r2d = 180 / Math.PI;
         double earth_rad = 6378000f; //지구 반지름 근사값
@@ -62,8 +194,8 @@ public class screen5 extends AppCompatActivity {
         double rlat = (r / earth_rad) * r2d;
         double rlng = rlat / Math.cos(c.getMapPointGeoCoord().latitude * d2r);
 
-        double theta = Math.PI/2 * (new Random().nextInt(2) + new Random().nextDouble());
-        theta = theta + angle;
+        double theta = Math.PI * (new Random().nextInt(2) + new Random().nextDouble());
+        //theta = theta + angle;
         double y = c.getMapPointGeoCoord().longitude + (rlng * Math.cos(theta));
         double x = c.getMapPointGeoCoord().latitude + (rlat * Math.sin(theta));
         return MapPoint.mapPointWithGeoCoord(x, y);
@@ -130,10 +262,10 @@ public class screen5 extends AppCompatActivity {
         ObjectAnimator progressAnimator = ObjectAnimator.ofInt(progressBar, "progress", 0, 100);
         progressAnimator.setDuration(3000); // 3초
         progressAnimator.start();
-        handler.postDelayed(new Runnable() {
+        handler2.postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(getApplicationContext(), screen6_2.class); //화면 전환
+                Intent intent = new Intent(getApplicationContext(), screen6_1.class); //화면 전환
                 startActivity(intent);
                 finish();
             }
@@ -141,7 +273,7 @@ public class screen5 extends AppCompatActivity {
     }
 
     private void stopHandler() {
-        handler.removeCallbacksAndMessages(null);
+        handler2.removeCallbacksAndMessages(null);
     }
 
     public void button1(View v){
@@ -149,4 +281,6 @@ public class screen5 extends AppCompatActivity {
         startActivity((intent));
         finish();
     }
+
+
 }

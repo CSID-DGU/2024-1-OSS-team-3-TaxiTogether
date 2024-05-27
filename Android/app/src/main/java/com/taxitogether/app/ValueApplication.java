@@ -3,11 +3,17 @@ package com.taxitogether.app;
 import android.app.Application;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import net.daum.mf.map.api.MapPoint;
+
+import java.util.ArrayList;
+
 public class ValueApplication extends Application {
 
     private int num_of_person;
     private double start_latitude, start_longitude;
     private double end_latitude, end_longitude;
+
+    private ArrayList<MapPoint> destinations = new ArrayList<>();
     @Override public void onCreate(){
         super.onCreate();
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
@@ -45,6 +51,10 @@ public class ValueApplication extends Application {
     }
     public void set_end_longitude(double num){
         this.end_longitude = num;
+    }
+
+    public void set_destinations(ArrayList<MapPoint> destinations){
+        this.destinations = destinations;
     }
 
 }

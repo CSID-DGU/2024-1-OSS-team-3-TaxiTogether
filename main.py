@@ -1,5 +1,18 @@
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Dict, Tuple
 import requests
 import itertools
+
+app = FastAPI()
+
+class Coordinates(BaseModel):
+    lat: float
+    lon: float
+
+class RequestModel(BaseModel):
+    start: Coordinates
+    points: Dict[str, Coordinates]
 
 def get_distance_from_kakao_api(api_key, coord1, coord2):
     url = "https://apis-navi.kakaomobility.com/v1/directions"
@@ -29,7 +42,8 @@ def get_fare_from_kakao_api(api_key, coord1, coord2):
     response = requests.get(url, headers=headers, params=params)
     if response.status_code == 200:
         result = response.json()
-        return result['routes'][0]['summary']['fare']['taxi'] + result['routes'][0]['summary']['fare']['toll']  # 택시요금 + 톨게이트 요금
+        fare_info = result['routes'][0]['summary']['fare']
+        return fare_info['taxi'] + fare_info['toll']
     else:
         raise Exception("Error fetching data from Kakao API")
 
@@ -106,12 +120,9 @@ def validate_availability(start, points, api_key):
         else:
             result[name] = 0
 
-    print('최적 경로 순서: ', best_route)
-    print('유효성 퍼센테이지: ', result)
-
     return best_route, result
 
-def caculate_each_fare(best_route, start, coords, api_key):
+def calculate_each_fare(best_route, start, coords, api_key):
     num_points = len(best_route)
     
     if num_points == 2:
@@ -215,28 +226,31 @@ def caculate_each_fare(best_route, start, coords, api_key):
             best_route[3]: fare4
         }
 
-# 테스트 케이스
-start = [35.0806128, 128.8987007]
-points = {
-    'first': [35.08773181281280, 128.90700099747264],
-    'second': [35.11191835,128.9217078],
-    'third': [35.11508664, 128.92223847],
-    'fourth': [35.11811858, 128.91652848]
-}
+@app.post("/validate_route")
+def validate_route(request: RequestModel):
+    start = [request.start.lat, request.start.lon]
+    points = {key: [point.lat, point.lon] for key, point in request.points.items()}
+    api_key = "af3a07081f830adca6b60768135b5e54"
 
-api_key = "af3a07081f830adca6b60768135b5e54"
+    try:
+        result = validate_availability(start, points, api_key)
 
-result = validate_availability(start, points, api_key)
+        is_available = True
+        for value in result[1].values():
+            if value != 0 and value < 60:
+                is_available = False
+                break
 
-is_available = True
-for value in result[1].values():
-    if value != 0 and value < 60:
-        is_available = False
-        break
+        if not is_available:
+            raise HTTPException(status_code=400, detail="Invalid route: one or more points have less than 60% availability")
 
-if is_available:
-    print("이동 가능한 경로입니다.")
-    fares = caculate_each_fare(result[0], start, points, api_key)
-    print(fares)
-else:
-    print("이동 가능한 경로가 아닙니다.")
+        fares = calculate_each_fare(result[0], start, points, api_key)
+        return {"best_route": result[0], "fares": fares}
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# 코드를 실행하려면 다음 명령어를 실행해주세요: uvicorn main:app --reload

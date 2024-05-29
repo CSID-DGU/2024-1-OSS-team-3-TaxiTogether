@@ -1,5 +1,3 @@
-#af3a07081f830adca6b60768135b5e54
-
 import requests
 import itertools
 
@@ -16,6 +14,22 @@ def get_distance_from_kakao_api(api_key, coord1, coord2):
     if response.status_code == 200:
         result = response.json()
         return result['routes'][0]['summary']['distance']
+    else:
+        raise Exception("Error fetching data from Kakao API")
+
+def get_fare_from_kakao_api(api_key, coord1, coord2):
+    url = "https://apis-navi.kakaomobility.com/v1/directions"
+    headers = {
+        "Authorization": f"KakaoAK {api_key}"
+    }
+    params = {
+        "origin": f"{coord1[1]},{coord1[0]}",
+        "destination": f"{coord2[1]},{coord2[0]}"
+    }
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        result = response.json()
+        return result['routes'][0]['summary']['fare']['taxi'] + result['routes'][0]['summary']['fare']['toll']  # 택시요금 + 톨게이트 요금
     else:
         raise Exception("Error fetching data from Kakao API")
 
@@ -91,19 +105,138 @@ def validate_availability(start, points, api_key):
             result[name] = percentages[2]
         else:
             result[name] = 0
+
+    print('최적 경로 순서: ', best_route)
+    print('유효성 퍼센테이지: ', result)
+
+    return best_route, result
+
+def caculate_each_fare(best_route, start, coords, api_key):
+    num_points = len(best_route)
     
-    return result
+    if num_points == 2:
+        p1 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) / 4
+        p2 = get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) / 3 + p1
+        p3 = p2
+
+        q1 = get_fare_from_kakao_api(api_key, start, coords[best_route[1]])
+        q2 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]])
+        q3 = q2
+
+        b1 = q2 / q1
+        b2 = q2 / q2
+
+        total_b = b1 + b2
+
+        fare1 = p1 + p3 * b1 / total_b
+        fare2 = p2 + p3 * b2 / total_b
+
+        return {
+            best_route[0]: fare1,
+            best_route[1]: fare2
+        }
+
+    elif num_points == 3:
+        p1 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) / 5
+        p2 = get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) / 4 + p1
+        p3 = get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]]) / 3 + p1 + p2
+        p4 = p3
+
+        q1 = get_fare_from_kakao_api(api_key, start, coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]])
+        
+        q2 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[2]])
+        
+        q3 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]])
+
+        b1 = q3 / q1
+        b2 = q3 / q2
+        b3 = q3 / q3
+
+        total_b = b1 + b2 + b3
+
+        fare1 = p1 + p4 * b1 / total_b
+        fare2 = p2 + p4 * b2 / total_b
+        fare3 = p3 + p4 * b3 / total_b
+
+        return {
+            best_route[0]: fare1,
+            best_route[1]: fare2,
+            best_route[2]: fare3
+        }
+
+    elif num_points == 4:
+        p1 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) / 5
+        p2 = get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) / 4 + p1
+        p3 = get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]]) / 3 + p1 + p2
+        p4 = get_fare_from_kakao_api(api_key, coords[best_route[2]], coords[best_route[3]]) / 2 + p1 + p2 + p3
+        p5 = p4
+
+        q1 = get_fare_from_kakao_api(api_key, start, coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[2]], coords[best_route[3]])
+        
+        q2 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[2]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[2]], coords[best_route[3]])
+        
+        q3 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[3]])
+        
+        q4 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]])
+
+        q5 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[0]], coords[best_route[1]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[1]], coords[best_route[2]]) + \
+             get_fare_from_kakao_api(api_key, coords[best_route[2]], coords[best_route[3]])
+
+        b1 = q5 / q1
+        b2 = q5 / q2
+        b3 = q5 / q3
+        b4 = q5 / q4
+
+        total_b = b1 + b2 + b3 + b4
+
+        fare1 = p1 + p5 * b1 / total_b
+        fare2 = p2 + p5 * b2 / total_b
+        fare3 = p3 + p5 * b3 / total_b
+        fare4 = p4 + p5 * b4 / total_b
+
+        return {
+            best_route[0]: round(fare1),
+            best_route[1]: fare2,
+            best_route[2]: fare3,
+            best_route[3]: fare4
+        }
 
 # 테스트 케이스
-start = [37.5665, 126.9780]  # 서울 시청 좌표 (위도, 경도)
+start = [35.0806128, 128.8987007]
 points = {
-    'first': [37.5775, 126.9768],  # 경복궁 좌표 (위도, 경도)
-    'second': [37.5714, 126.9658],  # 청와대 좌표 (위도, 경도)
-    'third': [37.5512, 126.9882],  # 남산타워 좌표 (위도, 경도)
-    'fourth': [37.5796, 126.9770]  # 광화문 좌표 (위도, 경도)
+    'first': [35.08773181281280, 128.90700099747264],
+    'second': [35.11191835,128.9217078],
+    'third': [35.11508664, 128.92223847],
+    'fourth': [35.11811858, 128.91652848]
 }
 
 api_key = "af3a07081f830adca6b60768135b5e54"
 
 result = validate_availability(start, points, api_key)
-print(result)
+
+is_available = True
+for value in result[1].values():
+    if value != 0 and value < 60:
+        is_available = False
+        break
+
+if is_available:
+    print("이동 가능한 경로입니다.")
+    fares = caculate_each_fare(result[0], start, points, api_key)
+    print(fares)
+else:
+    print("이동 가능한 경로가 아닙니다.")

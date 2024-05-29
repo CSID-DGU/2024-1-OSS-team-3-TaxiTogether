@@ -1,6 +1,5 @@
 import requests
 
-# Define the start and points as given in the test case
 start = {"lat": 35.0806128, "lon": 128.8987007}
 points = {
     'first': {"lat": 35.08773181281280, "lon": 128.90700099747264},
@@ -9,16 +8,13 @@ points = {
     #'fourth': {"lat": 35.11811858, "lon": 128.91652848}
 }
 
-# Create the request payload
 payload = {
     "start": start,
     "points": points
 }
 
-# Send the request to the FastAPI server
 response = requests.post("http://127.0.0.1:8000/validate_route", json=payload)
 
-# Check and print the response
 if response.status_code == 200:
     print("Response received:")
     print(response.json())

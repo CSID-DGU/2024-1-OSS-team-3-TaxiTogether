@@ -95,6 +95,7 @@ public class screen5 extends AppCompatActivity {
                     }
 
                     if(is_route_valid && destinations.size()==4){
+                        ((ValueApplication) getApplication()).set_destinations(destinations); // 목적지 집합을 전역 변수로
                         Intent intent = new Intent(getApplicationContext(), screen6_2.class); //화면 전환
                         startActivity(intent);
                         finish();

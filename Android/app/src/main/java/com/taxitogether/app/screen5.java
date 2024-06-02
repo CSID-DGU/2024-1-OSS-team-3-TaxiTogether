@@ -1,5 +1,7 @@
 package com.taxitogether.app;
 
+import static java.lang.Math.round;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.animation.ObjectAnimator;
@@ -30,104 +32,172 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 
 // 10개의 목적지 집합을 생성하고 이를 백엔드에 제공하는 java 코드
 public class screen5 extends AppCompatActivity {
+    private ExecutorService executor = Executors.newSingleThreadExecutor();
+    private volatile boolean running = true;
     private Handler handler = new Handler(Looper.getMainLooper());
-    private Handler handler2 = new Handler();
     private ProgressBar progressBar;
     private boolean is_route_valid= false;
     private boolean isResultReady = false;
     private String apiResult;
+    private JSONArray bestRoute;
+    private JSONObject fares;
+    private double totalFare;
+    private JSONObject percentages;
+    private JSONObject points;
+    private Thread myThread;
+    private ArrayList<MapPoint> destinations;
+    private MapPoint start, end, ra;
+    private int r, size;
+    private double angle, temp_angle;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.screen5);
-        MapPoint start, end;
         // 시작점과 목적지 좌표 반환
         start = MapPoint.mapPointWithGeoCoord(((ValueApplication) getApplication()).get_start_latitude(), ((ValueApplication) getApplication()).get_start_longitude());
         end = MapPoint.mapPointWithGeoCoord(((ValueApplication) getApplication()).get_end_latitude(), ((ValueApplication) getApplication()).get_end_longitude());
         // 거리 반환
-        int r = (int)calculateDistance(start, end);
+        r = (int)calculateDistance(start, end);
         // 출발점과 목적지의 각도 계산
-        double angle = calculateAngleInRadians(start, end);
-        ArrayList<MapPoint> destinations = new ArrayList<>();
+        angle = calculateAngleInRadians(start, end);
+        destinations = new ArrayList<>();
         destinations.add(end); // 사용자의 목적지를 Queue에 삽입
-
         progressBar = findViewById(R.id.progressBar);
         startHandler();
+        ra = getRandomLocation(end, r*destinations.size());
+        temp_angle=calculateAngleInRadians(start, ra);
+        while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
+            Log.d("Point_is_not_in_sector", "Point is not in sector!");
+            ra = getRandomLocation(end, r*destinations.size());
+            temp_angle = calculateAngleInRadians(start, ra);
+        }
+        destinations.add(ra);
 
-        Runnable task = new Runnable() {
-            public void run(){
-                while(true){ // 끝없이 다른 사용자의 목적지가 Queue에 들어온다고 가정
-                    MapPoint randompoint;
-                    randompoint = getRandomLocation(end, r * 4);
-                    destinations.add(randompoint);
-
-                    new PostTask(start, destinations, destinations.size(), handler).execute();
-
-                    // 결과가 준비될 때까지 대기
-                    synchronized (screen5.this) {
-                        while (!isResultReady) {
-                            try {
-                                screen5.this.wait();
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
-                    // 결과 처리
-                    if (apiResult != null) {
-                        // 결과를 로그에 출력
-                        Log.d("API Response", apiResult);
-                        // JSON 응답을 파싱하여 is_route_valid 값을 설정합니다.
-                        try {
-                            JSONObject jsonResponse = new JSONObject(apiResult);
-                            is_route_valid = jsonResponse.getBoolean("is_route_valid");
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
-                        // 결과가 준비된 후 플래그를 리셋
-                        isResultReady = false;
-                    }
-
-                    if(is_route_valid && destinations.size()==4){
-                        ((ValueApplication) getApplication()).set_destinations(destinations); // 목적지 집합을 전역 변수로
-                        Intent intent = new Intent(getApplicationContext(), screen6_2.class); //화면 전환
-                        startActivity(intent);
-                        finish();
-                    }
-                    else if(is_route_valid){
-                        is_route_valid=false;
-                    }
-                    else{
-                        destinations.remove(destinations.size()-1); // 만약 유효하지 않을 경우 제거
-                    }
-                    Log.d("RandomLocation", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
-                }
-            }
-        };
-        new Thread(task).start();
+        startDestinationUpdates();
     }
 
+    private void startDestinationUpdates(){
+        executor.submit(() -> {
+            MapPoint randompoint = ra;
+            while(running){ // 끝없이 다른 사용자의 목적지가 Queue에 들어온다고 가정
+                PostTask task = new PostTask(start, destinations);
+                task.execute();
+
+                // 결과가 준비될 때까지 대기
+                synchronized (screen5.this) {
+                    while (!isResultReady) {
+                        try {
+                            screen5.this.wait(100); // 100ms 단위로 대기
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    isResultReady=false;
+                }
+                // 결과 처리
+                if (apiResult!=null) {
+                    // 결과를 로그에 출력
+                    Log.d("API Response", apiResult);
+                    try {
+                        JSONObject jsonResponse = new JSONObject(apiResult);
+                        bestRoute = jsonResponse.getJSONArray("best_route");
+                        fares = jsonResponse.getJSONObject("fares");
+                        totalFare = jsonResponse.getDouble("total_fare");
+                        percentages = jsonResponse.getJSONObject("percentage");
+                        points = jsonResponse.getJSONObject("points");
+                        if(is_route_valid && destinations.size()==4){
+                            ArrayList<MapPoint> newdestinations = new ArrayList<>();
+                            ((ValueApplication) getApplication()).set_total_fare((int)round(totalFare)); // 총 금액을 전역 변수로
+                            try{
+                                MapPoint point;
+                                for(int i=0; i<bestRoute.length(); i++){ // 경로 순서대로 받아오는 함수
+                                    String key = bestRoute.getString(i);
+                                    JSONArray coords = points.getJSONArray(key);
+                                    point = MapPoint.mapPointWithGeoCoord(coords.getDouble(0), coords.getDouble(1));
+                                    newdestinations.add(point);
+                                    if(key.equals("0")){
+                                        double fare = fares.getDouble(key);
+                                        ((ValueApplication) getApplication()).set_my_fare((int)fare); // 사용자의 금액을 전역 변수로
+                                        ((ValueApplication) getApplication()).set_waypoints(newdestinations); // 걸린 시간 계산을 위한 사용자까지의 경로
+                                    }
+                                }
+                            } catch (JSONException e){
+                                e.printStackTrace();
+                            }
+                            ((ValueApplication) getApplication()).set_destinations(newdestinations); // 목적지 집합을 전역 변수로
+                            Log.d("Route_is_valid_and_complete", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
+                            running = false;
+                            executor.shutdownNow();
+                            new Thread(() -> {
+                                try {
+                                    while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                                        Log.d("ExecutorService", "Waiting for tasks to terminate");
+                                    }
+                                } catch (InterruptedException e) {
+                                    Log.e("Interrupted", "Interrupted while waiting for tasks to finish.");
+                                    Thread.currentThread().interrupt();
+                                }
+
+                                handler.post(() -> {
+                                    Intent intent = new Intent(getApplicationContext(), screen6_2.class);
+                                    startActivity(intent);
+                                    finish();
+                                });
+                            }).start();
+                        }
+                        else if(is_route_valid){
+                            Log.d("Route_is_valid", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
+                            is_route_valid=false;
+                            randompoint = getRandomLocation(end, r*destinations.size());
+                            temp_angle = calculateAngleInRadians(start, randompoint);
+                            while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
+                                Log.d("Point_is_not_in_sector", "Point is not in sector!");
+                                randompoint = getRandomLocation(end, r*destinations.size());
+                                temp_angle = calculateAngleInRadians(start, randompoint);
+                            }
+                            destinations.add(randompoint);
+                        }
+                    } catch (JSONException e) {
+                        Log.e("JSON parsing error", "error", e);
+                        e.printStackTrace();
+                    }
+                    // 결과가 준비된 후 플래그를 리셋
+                    isResultReady = false;
+                }else{
+                    Log.d("Route_is_not_valid", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
+                    destinations.remove(destinations.size()-1); // 만약 유효하지 않을 경우 제거
+                    randompoint = getRandomLocation(end, r*destinations.size());
+                    temp_angle = calculateAngleInRadians(start, randompoint);
+                    while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
+                        Log.d("Point_is_not_in_sector", "Point is not in sector!");
+                        randompoint = getRandomLocation(end, r*destinations.size());
+                        temp_angle = calculateAngleInRadians(start, randompoint);
+                    }
+                    destinations.add(randompoint);
+                }
+            }
+        });
+    }
+
+    // 비동기적으로 API 콜 처리
     private class PostTask extends AsyncTask<Void, Void, String> {
         private MapPoint start;
-        private ArrayList<MapPoint> destinations;
-        private int numPeople;
-        private Handler handler;
+        private ArrayList<MapPoint> destination;
 
-        public PostTask(MapPoint start, ArrayList<MapPoint> destinations, int numPeople, Handler handler) {
+        public PostTask(MapPoint start, ArrayList<MapPoint> destinations) {
             this.start = start;
-            this.destinations = destinations;
-            this.numPeople = numPeople;
-            this.handler = handler;
+            this.destination = destinations;
         }
         @Override
         protected String doInBackground(Void... voids) {
-            String urlString = "http://localhost:8000/calculate_fare";
+            String urlString = "http://127.0.0.1:8000/validate_route";
             HttpURLConnection urlConnection = null;
             try {
                 URL url = new URL(urlString);
@@ -138,30 +208,45 @@ public class screen5 extends AppCompatActivity {
                 urlConnection.setDoOutput(true);
 
                 JSONObject data = new JSONObject(); // 출발지를 json에 담는다
-                data.put("start", new JSONArray(new double[]{start.getMapPointGeoCoord().latitude, start.getMapPointGeoCoord().longitude}));
+                JSONObject startCoord = new JSONObject();
+                startCoord.put("lat", start.getMapPointGeoCoord().latitude);
+                startCoord.put("lon", start.getMapPointGeoCoord().longitude);
+                data.put("start", startCoord);
 
-                JSONArray destinationsArray = new JSONArray(); // 목적지 집합을 json에 담는다
-                for(MapPoint point: destinations){
-                    destinationsArray.put(new JSONArray(new double[]{point.getMapPointGeoCoord().latitude, point.getMapPointGeoCoord().longitude}));
+                JSONObject points = new JSONObject(); // 목적지 집합을 json에 담는다
+                for(int i=0; i<destination.size(); i++){
+                    MapPoint point = destination.get(i);
+                    JSONObject coord = new JSONObject();
+                    coord.put("lat", point.getMapPointGeoCoord().latitude);
+                    coord.put("lon", point.getMapPointGeoCoord().longitude);
+                    points.put(""+i, coord);
                 }
-                data.put("destinations", destinationsArray);
-                data.put("num_people", numPeople);
+                data.put("points", points);
 
                 try (Writer writer = new BufferedWriter(new OutputStreamWriter(urlConnection.getOutputStream(), "UTF-8"))) {
                     writer.write(data.toString());
                 }
-
+                int responseCode = urlConnection.getResponseCode();
                 BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "utf-8"));
                 StringBuilder response = new StringBuilder();
                 String responseLine;
                 while ((responseLine = br.readLine()) != null) { // response를 담아서 string으로 반환
                     response.append(responseLine.trim());
                 }
+                if(responseCode == HttpURLConnection.HTTP_OK) {
+                    is_route_valid=true;
+                    Log.d("Validation Success", "Response received:\n" + response.toString());
+                    return response.toString();
+                } else{
+                    is_route_valid = false;
+                    Log.d("Validation Failed","Failed to get a valid response: " + responseCode + "\n" + response.toString());
+                    return "Failed to get a valid response: " + responseCode + "\n" + response.toString();
+                }
 
-                return response.toString();
 
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.d("Connection Failed","Failed to get a valid response");
                 return null;
             } finally {
                 if (urlConnection != null) {
@@ -172,20 +257,17 @@ public class screen5 extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(String result) {
-            super.onPostExecute(result);
-            handler.post(new Runnable() {
-                public void run(){ // 결과를 받아서 apiResult에 담는다
-                    synchronized (screen5.this) {
-                        apiResult = result;
-                        isResultReady = true;
-                        screen5.this.notifyAll();
-                    }
+            super.onPostExecute(result);// 결과를 받아서 apiResult에 담는다
+                synchronized (screen5.this) {
+                    apiResult = result;
+                    isResultReady = true;
+                    screen5.this.notifyAll();
                 }
-            });
 
         }
     }
 
+    // 원형 범위 내에서 랜덤 좌표 생성
     private MapPoint getRandomLocation(MapPoint c, int radius) {
         double d2r = Math.PI / 180;
         double r2d = 180 / Math.PI;
@@ -202,6 +284,8 @@ public class screen5 extends AppCompatActivity {
         return MapPoint.mapPointWithGeoCoord(x, y);
     }
 
+
+    // 목적지 방향 각도 계산
     private static double calculateAngleInRadians(MapPoint point1, MapPoint point2) {
         double lat1 = point1.getMapPointGeoCoord().latitude;
         double lon1 = point1.getMapPointGeoCoord().longitude;
@@ -227,6 +311,7 @@ public class screen5 extends AppCompatActivity {
         return angle;
     }
 
+    // 거리 계산
     private static double calculateDistance(MapPoint point1, MapPoint point2) {
         double lat1 = point1.getMapPointGeoCoord().latitude;
         double lon1 = point1.getMapPointGeoCoord().longitude;
@@ -257,31 +342,99 @@ public class screen5 extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         stopHandler();
+        running = false;
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                Log.e("ExecutorService", "Tasks did not terminate in onPause");
+            }
+        } catch (InterruptedException e) {
+            Log.e("Interrupted", "Interrupted while waiting for tasks to finish in onPause.");
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void startHandler() {
+        Log.d("startHandler", "Handler started");
+
         ObjectAnimator progressAnimator = ObjectAnimator.ofInt(progressBar, "progress", 0, 100);
-        progressAnimator.setDuration(3000); // 3초
+        progressAnimator.setDuration(1000); // 3초
+        progressAnimator.setRepeatCount(ObjectAnimator.INFINITE);
+        progressAnimator.setRepeatMode(ObjectAnimator.RESTART);
         progressAnimator.start();
-        handler2.postDelayed(new Runnable() {
+
+        handler.postDelayed(() -> {
+            Log.d("startHandler", "postDelayed triggered");
+            running = false;
+
+            new Thread(() -> {
+                Log.d("startHandler", "Background thread started for shutdown");
+                executor.shutdownNow();
+                try {
+                    while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                        Log.d("ExecutorService", "Waiting for tasks to terminate");
+                    }
+                } catch (InterruptedException e) {
+                    Log.e("Interrupted", "Interrupted while waiting for tasks to finish.");
+                    Thread.currentThread().interrupt();
+                }
+
+                handler.post(() -> {
+                    Intent intent = new Intent(getApplicationContext(), screen6_1.class);
+                    startActivity(intent);
+                    finish();
+                });
+            }).start();
+
+        }, 60000); //딜레이 타임 조절
+
+        // ProgressBar 애니메이션을 계속 작동하게 하는 Runnable
+        handler.post(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(getApplicationContext(), screen6_1.class); //화면 전환
-                startActivity(intent);
-                finish();
+                if (running) {
+                    progressAnimator.start();
+                    handler.postDelayed(this, 1000); // 1초마다 반복
+                }
             }
-        }, 3000); //딜레이 타임 조절
+        });
     }
 
     private void stopHandler() {
-        handler2.removeCallbacksAndMessages(null);
+        handler.removeCallbacksAndMessages(null);
     }
 
     public void button1(View v){
-        Intent intent = new Intent(getApplicationContext(), screen4.class);
-        startActivity((intent));
-        finish();
+        running = false;
+        executor.shutdownNow(); // 현재 진행 중인 모든 작업을 중단
+        new Thread(() -> {
+            try {
+                while (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    Log.d("ExecutorService", "Waiting for tasks to terminate");
+                }
+            } catch (InterruptedException e) {
+                Log.e("Interrupted", "Interrupted while waiting for tasks to finish.");
+                Thread.currentThread().interrupt();
+            }
+
+            handler.post(() -> {
+                Intent intent = new Intent(getApplicationContext(), screen4.class);
+                startActivity(intent);
+                finish();
+            });
+        }).start();
     }
 
-
+    protected void onDestroy(){
+        super.onDestroy();
+        running = false;
+        executor.shutdownNow();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                Log.e("ExecutorService", "Tasks did not terminate");
+            }
+        } catch (InterruptedException e) {
+            Log.e("Interrupted", "Interrupted while waiting for tasks to finish.");
+            Thread.currentThread().interrupt();
+        }
+    }
 }

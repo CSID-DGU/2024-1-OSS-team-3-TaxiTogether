@@ -127,7 +127,7 @@ def validate_availability(start, points, api_key):
         route_distance = distances[('start', perm[0])]
         for i in range(len(perm) - 1):
             route_distance += distances[(perm[i], perm[i+1])]
-        route_distance += distances[(perm[-1], 'start')]
+        #route_distance += distances[(perm[-1], 'start')]
         
         if route_distance < min_distance:
             min_distance = route_distance
@@ -278,12 +278,12 @@ def validate_route(request: RequestModel):
         num_of_value = len(result[1])
         if num_of_value==4:
             for value in result[1].values():
-                if value != 0 and value < 50:
+                if value != 0 and value < 40:
                     is_available = False
                     break
         elif num_of_value==3:
             for value in result[1].values():
-                if value != 0 and value < 30:
+                if value != 0 and value < 20:
                     is_available = False
                     break
         elif num_of_value==2: # 4명일 때는 문제 없으나 두 명일 때는 크게 꺾이는 경우 퍼센티지가 매우 낮게 나옴

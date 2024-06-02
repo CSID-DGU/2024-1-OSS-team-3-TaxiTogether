@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.content.Intent;
 import android.view.Gravity;
@@ -15,9 +16,21 @@ import android.widget.LinearLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import net.daum.mf.map.api.MapPoint;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+
 public class screen8 extends AppCompatActivity {
 
     LinearLayout linearLayouts;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,32 +68,23 @@ public class screen8 extends AppCompatActivity {
 
         imageView.startAnimation(animIn); // 애니메이션 시작
 
-        // 승객이 혼자 탑승했을 경우 지불했을 금액과 걸린 시간
-        int past_cost=1; int past_time=1;
-        // 백엔드로부터 얻어낼 본인이 낼 금액과 걸린 시간(시간은 api 콜)
-        int cost=1; int time=1;
-        // 승객이 얼마를 이득봤는지와 시간은 얼마나 더 걸렸는지
-        int profit = past_cost - cost; //
-        int more_time = time - past_time;
-        // 얼마나 이득봤는지
-        float time_rate = time/past_time;
-        float cost_rate = cost/past_cost;
-        float rate = Math.round(time_rate * cost_rate);
-        // 전역 변수(몇 명이 타는지)
-        int num = ( (ValueApplication) getApplication() ).get_num();
+        int more_time= ((ValueApplication) getApplication()).get_more_time();
+        int profit= ((ValueApplication) getApplication()).get_profit();
+        int past_time= ((ValueApplication) getApplication()).get_past_time();
+        int past_cost= ((ValueApplication) getApplication()).get_past_cost();
+        int rate= ((ValueApplication) getApplication()).get_rate();
 
         TextView tv = findViewById(R.id.textView1);
-        tv.setText(more_time+"분정도 더 걸리지만...\n"+profit+"원이나\n아낄 수 있어요!");
-        //linearLayouts.addView(tv);
+        tv.setText(more_time + "분정도 더 걸리지만...\n" + profit + "원이나\n아낄 수 있어요!");
 
         TextView tv2 = findViewById(R.id.textView2);
-        tv2.setText("혼자 타면 "+past_time+"분 걸리고 "+past_cost+"원을 내야해요\n"+rate+"%를 이득 본 셈이에요!");
-        //linearLayouts.addView(tv2);
+        tv2.setText("혼자 타면 " + past_time + "분 걸리고 " + past_cost + "원을 내야해요\n" + rate + "%를 이득 본 셈이에요!");
 
     }
 
 
-    public void button1(View v){
+
+    private void button1(View v){
         finish();
     }
     public void button2(View v){
@@ -103,3 +107,4 @@ public class screen8 extends AppCompatActivity {
 
     }
 }
+

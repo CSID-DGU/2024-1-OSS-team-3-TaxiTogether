@@ -45,7 +45,7 @@ while matchedcount < 250:
         "points": points
     }
 
-    response = requests.post("http://127.0.0.1:8000/validate_route", json=payload)
+    response = requests.post("http://beatmania.app:8000/validate_route", json=payload)
 
     if response.status_code == 200:
         response_data = response.json()

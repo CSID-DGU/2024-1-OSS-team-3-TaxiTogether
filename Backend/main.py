@@ -383,3 +383,4 @@ def validate_route(request: RequestModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 코드를 실행하려면 다음 명령어를 실행해주세요: uvicorn main:app --reload
+# 디버깅 : uvicorn main:app --reload --log-level debug

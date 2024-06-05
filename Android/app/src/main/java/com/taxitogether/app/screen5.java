@@ -197,7 +197,7 @@ public class screen5 extends AppCompatActivity {
         }
         @Override
         protected String doInBackground(Void... voids) {
-            String urlString = "http://127.0.0.1:8000/validate_route";
+            String urlString = "http://beatmania.app:8000/validate_route";
             HttpURLConnection urlConnection = null;
             try {
                 URL url = new URL(urlString);
@@ -385,7 +385,7 @@ public class screen5 extends AppCompatActivity {
                 });
             }).start();
 
-        }, 60000); //딜레이 타임 조절
+        }, 120000); //딜레이 타임 조절
 
         // ProgressBar 애니메이션을 계속 작동하게 하는 Runnable
         handler.post(new Runnable() {

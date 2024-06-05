@@ -3,6 +3,12 @@ from pydantic import BaseModel
 from typing import List, Dict, Tuple
 import requests
 import itertools
+import logging
+import sys
+import traceback
+
+logger = logging.getLogger('uvicorn.error')
+logger.setLevel(logging.DEBUG)
 
 app = FastAPI()
 
@@ -15,7 +21,7 @@ class RequestModel(BaseModel):
     points: Dict[str, Coordinates]
 
 fare_cache = {} # API 콜 횟수를 줄이기 위한 딕셔너리
-
+duration_cache = {} # 소요 시간 저장을 위한 딕셔너리
 total_fare = 0
 
 def get_distance_from_kakao_api(api_key, coord1, coord2):
@@ -60,7 +66,7 @@ def get_fare_from_kakao_api(api_key, coord1, coord2, waypoints=[]):
         total_fare = fare_info['taxi'] + fare_info['toll']
 
         fare_cache[route_key] = total_fare
-
+        duration_cache[route_key] = result['routes'][0]['summary']['duration']
         return total_fare
     
     else:
@@ -265,8 +271,74 @@ def calculate_each_fare(best_route, start, coords, api_key):
             best_route[3]: fare4
         }
 
+def get_duration_from_kakao_api(api_key, coord1, coord2, waypoints=[]):
+
+    route_key = (tuple(coord1), tuple(coord2), tuple(tuple(wp) for wp in waypoints))
+    
+    if route_key in duration_cache:
+        return duration_cache[route_key]
+
+    points = "|".join([f"{wp[1]},{wp[0]}" for wp in waypoints])
+
+    url = "https://apis-navi.kakaomobility.com/v1/directions"
+    headers = {
+        "Authorization": f"KakaoAK {api_key}"
+    }
+    params = {
+        "origin": f"{coord1[1]},{coord1[0]}",
+        "destination": f"{coord2[1]},{coord2[0]}",
+    }    
+    if waypoints:
+        params["waypoints"] = points
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        result = response.json()
+        duration_cache[route_key] = result['routes'][0]['summary']['duration']
+        return duration_cache[route_key]
+    
+    else:
+        raise Exception("Error fetching data from Kakao API")
+    
+
+def calculate_discount_rate(best_route, start, coords, fares, api_key):
+    o1 = get_fare_from_kakao_api(api_key, start, coords[best_route[0]])
+    o2 = get_fare_from_kakao_api(api_key, start, coords[best_route[1]])
+    o3 = get_fare_from_kakao_api(api_key, start, coords[best_route[2]])
+    o4 = get_fare_from_kakao_api(api_key, start, coords[best_route[3]])
+
+    f1 = fares[best_route[0]]
+    f2 = fares[best_route[1]]
+    f3 = fares[best_route[2]]
+    f4 = fares[best_route[3]]
+
+    return {
+            best_route[0]: ((o1-f1)/o1)*100,
+            best_route[1]: ((o2-f2)/o2)*100,
+            best_route[2]: ((o3-f3)/o3)*100,
+            best_route[3]: ((o4-f4)/o4)*100
+        }
+    
+def calculate_duration_gap(best_route, start, coords, api_key):
+    d1 = get_duration_from_kakao_api(api_key, start, coords[best_route[0]])
+    d2 = get_duration_from_kakao_api(api_key, start, coords[best_route[1]], [coords[best_route[0]]])
+    d3 = get_duration_from_kakao_api(api_key, start, coords[best_route[2]], [coords[best_route[0]], coords[best_route[1]]])
+    d4 = get_duration_from_kakao_api(api_key, start, coords[best_route[3]], [coords[best_route[0]], coords[best_route[1]], coords[best_route[2]]])
+
+    solod1 = get_duration_from_kakao_api(api_key, start, coords[best_route[0]])
+    solod2 = get_duration_from_kakao_api(api_key, start, coords[best_route[1]])
+    solod3 = get_duration_from_kakao_api(api_key, start, coords[best_route[2]])
+    solod4 = get_duration_from_kakao_api(api_key, start, coords[best_route[3]])
+
+    return {
+            best_route[0]: d1 - solod1,
+            best_route[1]: d2 - solod2,
+            best_route[2]: d3 - solod3,
+            best_route[3]: d4 - solod4
+        }
+
 @app.post("/validate_route")
 def validate_route(request: RequestModel):
+    logger.debug('this is a debug message')
     start = [request.start.lat, request.start.lon]
     points = {key: [point.lat, point.lon] for key, point in request.points.items()}
     api_key = "af3a07081f830adca6b60768135b5e54"
@@ -296,7 +368,13 @@ def validate_route(request: RequestModel):
             raise HTTPException(status_code=400, detail="Invalid route: one or more points have less than 60% availability")
 
         fares = calculate_each_fare(result[0], start, points, api_key)
-        return {"best_route": result[0], "fares": fares, "total_fare": total_fare, "percentage": result[1], "points": points}
+        try:
+            discount_rate = calculate_discount_rate(result[0], start, points, fares, api_key)
+            duration_gap = calculate_duration_gap(result[0], start, points, api_key)
+        except TypeError as e:
+            logger.debug(traceback.format_exc())
+
+        return {"best_route": result[0], "fares": fares, "total_fare": total_fare, "percentage": result[1], "points": points, "discount_rate": discount_rate, "duration_gap" : duration_gap}
 
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -305,3 +383,4 @@ def validate_route(request: RequestModel):
         raise HTTPException(status_code=500, detail=str(e))
 
 # 코드를 실행하려면 다음 명령어를 실행해주세요: uvicorn main:app --reload
+# 디버깅 : uvicorn main:app --reload --log-level debug

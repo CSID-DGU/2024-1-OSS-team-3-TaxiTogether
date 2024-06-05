@@ -65,17 +65,26 @@ public class screen5 extends AppCompatActivity {
         end = MapPoint.mapPointWithGeoCoord(((ValueApplication) getApplication()).get_end_latitude(), ((ValueApplication) getApplication()).get_end_longitude());
         // 거리 반환
         r = (int)calculateDistance(start, end);
+        if(r>10000){
+            size = 1;
+        }
+        else if(r>5000){
+            size = 2;
+        }
+        else{
+            size = 3;
+        }
         // 출발점과 목적지의 각도 계산
         angle = calculateAngleInRadians(start, end);
         destinations = new ArrayList<>();
         destinations.add(end); // 사용자의 목적지를 Queue에 삽입
         progressBar = findViewById(R.id.progressBar);
         startHandler();
-        ra = getRandomLocation(end, r*destinations.size());
+        ra = getRandomLocation(end, r*size);
         temp_angle=calculateAngleInRadians(start, ra);
         while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
             Log.d("Point_is_not_in_sector", "Point is not in sector!");
-            ra = getRandomLocation(end, r*destinations.size());
+            ra = getRandomLocation(end, r*size);
             temp_angle = calculateAngleInRadians(start, ra);
         }
         destinations.add(ra);
@@ -155,11 +164,11 @@ public class screen5 extends AppCompatActivity {
                         else if(is_route_valid){
                             Log.d("Route_is_valid", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
                             is_route_valid=false;
-                            randompoint = getRandomLocation(end, r*destinations.size());
+                            randompoint = getRandomLocation(end, r*size);
                             temp_angle = calculateAngleInRadians(start, randompoint);
                             while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
                                 Log.d("Point_is_not_in_sector", "Point is not in sector!");
-                                randompoint = getRandomLocation(end, r*destinations.size());
+                                randompoint = getRandomLocation(end, r*size);
                                 temp_angle = calculateAngleInRadians(start, randompoint);
                             }
                             destinations.add(randompoint);
@@ -173,11 +182,11 @@ public class screen5 extends AppCompatActivity {
                 }else{
                     Log.d("Route_is_not_valid", "Location: " + randompoint.getMapPointGeoCoord().latitude + ", " + randompoint.getMapPointGeoCoord().longitude);
                     destinations.remove(destinations.size()-1); // 만약 유효하지 않을 경우 제거
-                    randompoint = getRandomLocation(end, r*destinations.size());
+                    randompoint = getRandomLocation(end, r*size);
                     temp_angle = calculateAngleInRadians(start, randompoint);
                     while(temp_angle>angle+Math.PI/4||temp_angle<angle-Math.PI/4){ // 범위 안에 있는 것을 골라냄
                         Log.d("Point_is_not_in_sector", "Point is not in sector!");
-                        randompoint = getRandomLocation(end, r*destinations.size());
+                        randompoint = getRandomLocation(end, r*size);
                         temp_angle = calculateAngleInRadians(start, randompoint);
                     }
                     destinations.add(randompoint);
@@ -197,7 +206,9 @@ public class screen5 extends AppCompatActivity {
         }
         @Override
         protected String doInBackground(Void... voids) {
-            String urlString = "http://beatmania.app:8000/validate_route";
+            Log.d("PostTask", "doInBackground started");
+           // String urlString = "http://beatmania.app:8000/validate_route";
+            String urlString = "http://127.0.0.1:8000/validate_route";
             HttpURLConnection urlConnection = null;
             try {
                 URL url = new URL(urlString);
@@ -206,7 +217,7 @@ public class screen5 extends AppCompatActivity {
                 urlConnection.setRequestProperty("Content-Type", "application/json; utf-8");
                 urlConnection.setRequestProperty("Accept", "application/json");
                 urlConnection.setDoOutput(true);
-
+                Log.d("PostTask", "doInBackground middle");
                 JSONObject data = new JSONObject(); // 출발지를 json에 담는다
                 JSONObject startCoord = new JSONObject();
                 startCoord.put("lat", start.getMapPointGeoCoord().latitude);
@@ -227,6 +238,7 @@ public class screen5 extends AppCompatActivity {
                     writer.write(data.toString());
                 }
                 int responseCode = urlConnection.getResponseCode();
+                Log.d("PostTask", ""+responseCode);
                 BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "utf-8"));
                 StringBuilder response = new StringBuilder();
                 String responseLine;
@@ -246,7 +258,7 @@ public class screen5 extends AppCompatActivity {
 
             } catch (Exception e) {
                 e.printStackTrace();
-                Log.d("Connection Failed","Failed to get a valid response");
+                Log.e("Connection Failed","Failed to get a valid response", e);
                 return null;
             } finally {
                 if (urlConnection != null) {

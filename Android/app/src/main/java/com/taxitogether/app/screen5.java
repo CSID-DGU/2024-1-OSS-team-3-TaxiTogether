@@ -207,8 +207,8 @@ public class screen5 extends AppCompatActivity {
         @Override
         protected String doInBackground(Void... voids) {
             Log.d("PostTask", "doInBackground started");
-           // String urlString = "http://beatmania.app:8000/validate_route";
-            String urlString = "http://127.0.0.1:8000/validate_route";
+            String urlString = "http://beatmania.app:8000/validate_route";
+            //String urlString = "http://127.0.0.1:8000/validate_route";
             HttpURLConnection urlConnection = null;
             try {
                 URL url = new URL(urlString);

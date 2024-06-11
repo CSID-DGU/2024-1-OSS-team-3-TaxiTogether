@@ -19,17 +19,27 @@ import android.content.pm.Signature;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+import com.kakao.util.maps.helper.Utility;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
 public class MainActivity extends AppCompatActivity {
     private MapView mapView;
     private RelativeLayout mapViewContainer;
+    private TextView text;
+
+    public MainActivity() {
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        text=findViewById(R.id.text);
+
 
         //initMapView(); // 지도 생성
 
@@ -105,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 MessageDigest md = MessageDigest.getInstance("SHA");
                 md.update(signature.toByteArray());
-                Log.d("KeyHash", Base64.encodeToString(md.digest(), Base64.DEFAULT));
+                text.setText(Base64.encodeToString(md.digest(), Base64.DEFAULT));
             } catch (NoSuchAlgorithmException e) {
                 Log.e("KeyHash", "Unable to get MessageDigest. signature=" + signature, e);
             }
